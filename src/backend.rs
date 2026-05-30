@@ -1,3 +1,6 @@
+//! The backend module contains the core and shared data used by the main systems of the application.
+//! 
+
 use std::path::PathBuf;
 use std::time::Duration;
 use crate::audio_processing::{split_audio_into_stems, AudioProcessingError, AudioStems};

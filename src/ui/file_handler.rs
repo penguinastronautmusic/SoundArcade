@@ -1,4 +1,7 @@
+//! A simple file picker UI component to choose the music file to parse into stems.
+
 use std::path::PathBuf;
+use bevy::log::info;
 use bevy::prelude::{Commands, Component, Entity, NextState, Query, ResMut, Resource};
 use bevy::tasks::{AsyncComputeTaskPool, Task};
 use bevy::tasks::futures_lite::future;
@@ -9,9 +12,9 @@ use crate::ui::app_state::AppState;
 pub(crate) struct FilePickTask(Task<Option<PathBuf>>);
 
 pub(crate) fn trigger_file_dialog(mut commands: Commands) {
+    info!("Spanning a file dialog task to ask user to find an audio file.");
     let thread_pool = AsyncComputeTaskPool::get();
 
-    // Spawn the dialog onto the async thread pool
     let task = thread_pool.spawn(async move {
         let file_handle = AsyncFileDialog::new()
             .add_filter("audio", &["mp3", "wav", "ogg"])
@@ -37,9 +40,11 @@ pub(crate) fn poll_file_dialog(
             commands.entity(entity).despawn();
 
             if let Some(path) = result {
+                info!("Found a file, moving to processing state.");
                 commands.insert_resource(SelectedAudioFile(path));
                 next_state.set(AppState::ProcessingAudio);
             } else {
+                info!("User chose to cancel, moving back to Welcome screen.");
                 next_state.set(AppState::Welcome);
             }
         }

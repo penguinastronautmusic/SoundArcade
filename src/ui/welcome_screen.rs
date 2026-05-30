@@ -1,3 +1,7 @@
+//! The first UI element that the User sees.
+//!
+//! This is meant to be an element that explains the general flow of the app.
+
 use bevy::prelude::*;
 use crate::ui::app_state::AppState;
 
@@ -23,12 +27,12 @@ pub fn spawn_welcome_screen(mut commands: Commands) {
         .with_children(|parent| {
             // Main App Header
             parent.spawn((
-                Text::new("Audio Visualizer"),
+                Text::new("Song Arcade"),
                 TextFont {
                     font_size: 48.0,
                     ..default()
                 },
-                TextColor(Color::WHITE),
+                TextColor(Color::srgb(0.45, 0.18, 1.0)),
             ));
 
             // Tool Instructions Paragraph
@@ -38,7 +42,7 @@ pub fn spawn_welcome_screen(mut commands: Commands) {
                     font_size: 18.0,
                     ..default()
                 },
-                TextColor(Color::srgba(0.7, 0.7, 0.7, 1.0)), // Dimmed text color
+                TextColor(Color::srgb(0.7, 0.7, 0.7)), // Dimmed text color
                 TextLayout::new_with_justify(Justify::Center),
             ));
 
@@ -60,7 +64,7 @@ pub fn spawn_welcome_screen(mut commands: Commands) {
                         bottom:Color::WHITE,
                         left:Color::WHITE
                     },
-                    BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 1.0)),
+                    BackgroundColor(Color::srgb(0.1, 0.1, 0.1)),
                 ))
                 .with_children(|button| {
                     button.spawn((

@@ -6,8 +6,9 @@ use bevy::DefaultPlugins;
 use bevy::post_process::bloom::Bloom;
 use bevy::prelude::*;
 
+use bevy::log;
+
 mod audio_processing;
-mod reference;
 mod ui;
 mod backend;
 mod midware;
@@ -15,6 +16,8 @@ mod midware;
 use ui::app_state::AppState;
 
 fn main() {
+    info!("Starting application...");
+
     App::new()
         .add_plugins(DefaultPlugins)
         .init_state::<AppState>()
@@ -33,27 +36,25 @@ fn main() {
         .add_systems(Update, ui::file_handler::poll_file_dialog
             .run_if(in_state(AppState::FileDialog)))
 
-        .add_systems(OnEnter(AppState::ProcessingAudio), ui::process_audio::start_backend_processing)
+        .add_systems(OnEnter(AppState::ProcessingAudio),
+                     (ui::process_audio::start_backend_processing,
+                            ui::spinner::setup))
         .add_systems(
             Update,
-            (ui::process_audio::animate_spinner,
+            (ui::spinner::animate_wheel,
+             ui::spinner::update_duration_text,
              ui::process_audio::monitor_backend).run_if(in_state(AppState::ProcessingAudio)),
         )
+        .add_systems(
+        OnExit(AppState::ProcessingAudio), ui::spinner::cleanup)
 
         .add_systems(OnEnter(AppState::CoreApplication), setup_core_app)
-
-        .add_systems(OnEnter(AppState::TestComponentDesign), ui::test_design::setup)
-        .add_systems(
-            Update,
-            (ui::test_design::animate_wheel,
-                ui::test_design::update_duration_text).run_if(in_state(AppState::TestComponentDesign)),
-        )
 
         .run();
 }
 
 fn setup_core_app() {
-    println!("Backend processing complete! Launching core game systems...");
+    info!("Launching core app systems...");
 }
 
 fn setup(mut commands: Commands) {

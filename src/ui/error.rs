@@ -1,3 +1,9 @@
+//! A set of components and functions used to display an error to the user that require
+//! the app to go to recovery state.
+//!
+//! Usually a result of something wrong being caught with <Result> rust object.
+
+
 use bevy::prelude::*;
 use crate::ui::app_state::AppState;
 
