@@ -3,10 +3,11 @@ use bevy::camera::{Camera, Camera2d, ClearColorConfig};
 use bevy::color::Color;
 use bevy::core_pipeline::tonemapping::{DebandDither, Tonemapping};
 use bevy::DefaultPlugins;
+use bevy::input_focus::InputDispatchPlugin;
+use bevy::input_focus::tab_navigation::TabNavigationPlugin;
 use bevy::post_process::bloom::Bloom;
 use bevy::prelude::*;
-
-use bevy::log;
+use bevy::ui_widgets::UiWidgetsPlugins;
 
 mod audio_processing;
 mod ui;
@@ -19,7 +20,12 @@ fn main() {
     info!("Starting application...");
 
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins((
+            DefaultPlugins,
+            UiWidgetsPlugins,
+            InputDispatchPlugin,
+            TabNavigationPlugin,
+        ))
         .init_state::<AppState>()
 
         .init_resource::<ui::error::ErrorTracker>()
@@ -29,8 +35,12 @@ fn main() {
         .add_systems(Startup, setup)
 
         .add_systems(OnEnter(AppState::Welcome), ui::welcome_screen::spawn_welcome_screen)
-        .add_systems(Update, ui::welcome_screen::handle_welcome_screen_interaction
-            .run_if(in_state(AppState::Welcome)))
+        .add_systems(Update, (
+            ui::welcome_screen::handle_preview_interaction,
+            ui::welcome_screen::handle_select_file_interaction,
+            ui::bpm_slider::update_slider_visuals,
+            ui::bpm_slider::update_value_labels
+        ).run_if(in_state(AppState::Welcome)))
 
         .add_systems(OnEnter(AppState::FileDialog), ui::file_handler::trigger_file_dialog)
         .add_systems(Update, ui::file_handler::poll_file_dialog

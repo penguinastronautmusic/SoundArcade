@@ -14,5 +14,6 @@ pub(crate) enum AppState {
     ProcessingAudio,
     CoreApplication,
     UnrecoverableError,
+    #[allow(unused)]
     TestComponentDesign
 }
