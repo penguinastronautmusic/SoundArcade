@@ -6,8 +6,6 @@ use bevy::DefaultPlugins;
 use bevy::post_process::bloom::Bloom;
 use bevy::prelude::*;
 
-use bevy::log;
-
 mod audio_processing;
 mod ui;
 mod backend;

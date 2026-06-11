@@ -62,7 +62,7 @@ pub(crate) fn setup(mut commands: Commands) {
             },
             Transform::from_xyz(x as f32*SQUARE_SIZE*2.0, y as f32*SQUARE_SIZE*2.0, 0.0),
             WheelSquare { index: i },
-            DespawnOnExit(AppState::TestComponentDesign)
+            DespawnOnExit(AppState::ProcessingAudio)
         ));
         i += 1;
     }
@@ -81,7 +81,7 @@ pub(crate) fn setup(mut commands: Commands) {
             ..default()
         },
         DurationText,
-        DespawnOnExit(AppState::TestComponentDesign)
+        DespawnOnExit(AppState::ProcessingAudio)
     ));
 
     commands.spawn((
@@ -98,7 +98,7 @@ pub(crate) fn setup(mut commands: Commands) {
             ..default()
         },
         DurationText,
-        DespawnOnExit(AppState::TestComponentDesign)
+        DespawnOnExit(AppState::ProcessingAudio)
     ));
 }
 

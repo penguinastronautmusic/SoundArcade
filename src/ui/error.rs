@@ -74,9 +74,7 @@ pub(crate) fn error_screen_button_system(
 ) {
     for interaction in &mut interaction_query {
         if *interaction == Interaction::Pressed {
-            // Clear the old error data
             error_tracker.message.clear();
-            // Route user back to welcome screen
             next_state.set(AppState::Welcome);
         }
     }

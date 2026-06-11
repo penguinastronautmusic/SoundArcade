@@ -7,6 +7,7 @@
 //!
 
 use std::path::PathBuf;
+use std::time::Duration;
 use bevy::prelude::*;
 use bevy::tasks::{AsyncComputeTaskPool, Task};
 use bevy::tasks::futures_lite::future;
@@ -31,7 +32,7 @@ pub fn start_backend_processing(
         Ok(backend::load_backend(AppInput { 
             audio_file: file_path,
             output_dir: PathBuf::from("output/"),
-            tick_len: Default::default(),
+            tick_len: Duration::from_millis(100),
         })?)
     });
 
