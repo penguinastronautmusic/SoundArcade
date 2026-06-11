@@ -63,6 +63,7 @@ fn main() {
             ui::audio_track::track_icon_interaction_system,
             ui::audio_track::spawn_audio_squares_system,
             ui::audio_track::move_and_collide_squares_system,
+            ui::audio_track::icon_breathing_system,
         ).run_if(in_state(AppState::CoreApplication)))
 
         .run();

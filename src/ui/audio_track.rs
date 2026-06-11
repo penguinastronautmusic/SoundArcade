@@ -9,6 +9,11 @@ pub struct TrackIcon {
 #[derive(Component)]
 pub struct AudioSquare;
 
+#[derive(Component)]
+pub struct BreathingEffect {
+    pub time: f32,
+}
+
 #[derive(Resource, Default)]
 pub struct TickTimer(pub Timer);
 
@@ -86,54 +91,60 @@ pub fn setup_audio_tracks(
 pub fn track_icon_interaction_system(
     window_query: Query<&Window>,
     camera_query: Query<(&Camera, &GlobalTransform), With<Camera2d>>,
-    mut icon_query: Query<(&mut Sprite, &GlobalTransform, &TrackIcon)>,
+    mut icon_query: Query<(Entity, &mut Sprite, &GlobalTransform, &TrackIcon)>,
     mut stem_resources: ResMut<StemResources>,
     mouse_button_input: Res<ButtonInput<MouseButton>>,
+    breathing_query: Query<&BreathingEffect>,
 ) {
     let window = if let Ok(w) = window_query.single() { w } else { return };
     let (camera, camera_transform) = if let Ok(c) = camera_query.single() { c } else { return };
 
-    if let Some(cursor) = window.cursor_position() {
-        if let Ok(world_position) = camera.viewport_to_world_2d(camera_transform, cursor) {
-            for (mut sprite, transform, track_icon) in icon_query.iter_mut() {
-                let icon_pos = transform.translation().truncate();
-                let distance = world_position.distance(icon_pos);
+    let cursor_world_pos = window.cursor_position()
+        .and_then(|cursor| camera.viewport_to_world_2d(camera_transform, cursor).ok());
 
-                // Assuming the icon is roughly 40 units in radius based on icon_mesh
-                if distance < 40.0 {
-                    sprite.color = Color::srgb(10.0, 10.0, 10.0);
+    for (entity, mut sprite, transform, track_icon) in icon_query.iter_mut() {
+        let is_active = match track_icon.track_type {
+            TrackType::Vocals => stem_resources.vocals.is_active,
+            TrackType::Drums => stem_resources.drums.is_active,
+            TrackType::Bass => stem_resources.bass.is_active,
+            TrackType::Other => stem_resources.other.is_active,
+        };
 
-                    if mouse_button_input.just_pressed(MouseButton::Left) {
-                        match track_icon.track_type {
-                            TrackType::Vocals => {
-                                stem_resources.vocals.is_active = !stem_resources.vocals.is_active;
-                                info!("Toggled Vocals is_active to: {}", stem_resources.vocals.is_active);
-                            }
-                            TrackType::Drums => {
-                                stem_resources.drums.is_active = !stem_resources.drums.is_active;
-                                info!("Toggled Drums is_active to: {}", stem_resources.drums.is_active);
-                            }
-                            TrackType::Bass => {
-                                stem_resources.bass.is_active = !stem_resources.bass.is_active;
-                                info!("Toggled Bass is_active to: {}", stem_resources.bass.is_active);
-                            }
-                            TrackType::Other => {
-                                stem_resources.other.is_active = !stem_resources.other.is_active;
-                                info!("Toggled Other is_active to: {}", stem_resources.other.is_active);
-                            }
-                        }
+        // Handle interaction
+        if let Some(world_position) = cursor_world_pos {
+            let icon_pos = transform.translation().truncate();
+            let distance = world_position.distance(icon_pos);
+
+            if distance < 40.0 && mouse_button_input.just_pressed(MouseButton::Left) {
+                match track_icon.track_type {
+                    TrackType::Vocals => {
+                        stem_resources.vocals.is_active = !stem_resources.vocals.is_active;
+                        info!("Toggled Vocals is_active to: {}", stem_resources.vocals.is_active);
                     }
-                } else {
-                    sprite.color = Color::srgb(5.0, 5.0, 5.0);
+                    TrackType::Drums => {
+                        stem_resources.drums.is_active = !stem_resources.drums.is_active;
+                        info!("Toggled Drums is_active to: {}", stem_resources.drums.is_active);
+                    }
+                    TrackType::Bass => {
+                        stem_resources.bass.is_active = !stem_resources.bass.is_active;
+                        info!("Toggled Bass is_active to: {}", stem_resources.bass.is_active);
+                    }
+                    TrackType::Other => {
+                        stem_resources.other.is_active = !stem_resources.other.is_active;
+                        info!("Toggled Other is_active to: {}", stem_resources.other.is_active);
+                    }
                 }
             }
-            return;
         }
-    }
 
-    // Reset colors if no hover detected
-    for (mut sprite, _, _) in icon_query.iter_mut() {
-        sprite.color = Color::srgb(5.0, 5.0, 5.0);
+        // Update color based on state ONLY IF NOT BREATHING
+        if !breathing_query.contains(entity) {
+            if is_active {
+                sprite.color = Color::srgb(5.0, 5.0, 5.0);
+            } else {
+                sprite.color = Color::srgb(0.2, 0.2, 0.2);
+            }
+        }
     }
 }
 
@@ -198,7 +209,7 @@ pub fn move_and_collide_squares_system(
     mut commands: Commands,
     time: Res<Time>,
     mut square_query: Query<(Entity, &mut Transform), With<AudioSquare>>,
-    icon_query: Query<(&GlobalTransform, &TrackIcon)>,
+    icon_query: Query<(Entity, &GlobalTransform), With<TrackIcon>>,
 ) {
     let speed = 200.0;
     for (entity, mut transform) in square_query.iter_mut() {
@@ -206,11 +217,15 @@ pub fn move_and_collide_squares_system(
 
         // Collision check
         let square_pos = transform.translation.truncate();
-        for (icon_transform, _icon) in icon_query.iter() {
+        for (icon_entity, icon_transform) in icon_query.iter() {
             let icon_pos = icon_transform.translation().truncate();
             let distance = square_pos.distance(icon_pos);
 
-            if distance < 60.0 {
+            if distance < 80.0 {
+                commands.entity(icon_entity).insert(BreathingEffect {
+                    time: 0.2, // Effect lasts for 0.2 seconds
+                });
+                
                 commands.entity(entity).despawn();
                 break;
             }
@@ -219,6 +234,50 @@ pub fn move_and_collide_squares_system(
         // Cleanup squares that go off-screen
         if transform.translation.y < -500.0 {
             commands.entity(entity).despawn();
+        }
+    }
+}
+
+pub fn icon_breathing_system(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut query: Query<(Entity, &mut Sprite, &mut BreathingEffect, &TrackIcon)>,
+    stem_resources: Res<StemResources>,
+) {
+    for (entity, mut sprite, mut effect, track_icon) in query.iter_mut() {
+        effect.time -= time.delta_secs();
+        
+        let is_active = match track_icon.track_type {
+            TrackType::Vocals => stem_resources.vocals.is_active,
+            TrackType::Drums => stem_resources.drums.is_active,
+            TrackType::Bass => stem_resources.bass.is_active,
+            TrackType::Other => stem_resources.other.is_active,
+        };
+
+        let base_color = if is_active {
+            Color::srgb(5.0, 5.0, 5.0)
+        } else {
+            Color::srgb(0.2, 0.2, 0.2)
+        };
+
+        if effect.time <= 0.0 {
+            sprite.color = base_color;
+            commands.entity(entity).remove::<BreathingEffect>();
+        } else {
+            // "Glow" effect: make the icon slightly brighter based on the remaining time
+            // effect.time goes from 0.2 to 0.0
+            // We want it to be brightest at the start (t=1.0) and fade to base (t=0.0)
+            let t = (effect.time / 0.2).clamp(0.0, 1.0);
+            
+            let base_srgba = base_color.to_srgba();
+
+            // Increase brightness by scaling the RGB values.
+            let glow_factor = 1.0 + t * 0.8;
+            
+            let r = base_srgba.red * glow_factor;
+            let g = base_srgba.green * glow_factor;
+            let b = base_srgba.blue * glow_factor;
+            sprite.color = Color::srgb(r, g, b);
         }
     }
 }
