@@ -12,3 +12,4 @@ pub(crate) mod error;
 pub(crate) mod test_design;
 pub(crate) mod spinner;
 pub(crate) mod bpm_slider;
+pub(crate) mod audio_track;

@@ -58,16 +58,14 @@ fn main() {
         .add_systems(
         OnExit(AppState::ProcessingAudio), ui::spinner::cleanup)
 
-        .add_systems(OnEnter(AppState::CoreApplication), setup_core_app)
+        .add_systems(OnEnter(AppState::CoreApplication), ui::audio_track::setup_audio_tracks)
 
         .run();
 }
 
-fn setup_core_app() {
-    info!("Launching core app systems...");
-}
 
-fn setup(mut commands: Commands) {
+fn setup(mut commands: Commands,
+         asset_server: Res<AssetServer>) {
     commands.spawn((
         Camera2d,
         Camera {
@@ -78,4 +76,9 @@ fn setup(mut commands: Commands) {
         Bloom::default(),           // 2. Enable bloom for the camera
         DebandDither::Enabled,      // Optional: bloom causes gradients which cause banding
     ));
+    // 2. Load the image from the assets/ folder
+    let handle: Handle<Image> = asset_server.load("badmic.png");
+
+    // 3. Insert the handle as a resource
+    commands.insert_resource(ui::audio_track::MyImage(handle));
 }
