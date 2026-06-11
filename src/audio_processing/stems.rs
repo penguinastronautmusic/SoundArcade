@@ -2,29 +2,10 @@
 //! into its 4 main stems.
 //!
 //! https://github.com/gentij/stem-splitter-core
-use std::fmt;
 use stem_splitter_core::{split_file, SplitOptions};
 use std::path::PathBuf;
 use bevy::log::*;
-
-pub enum AudioProcessingError {
-    InvalidFile(String),
-    CannotProcessAudio(String),
-}
-
-impl fmt::Display for AudioProcessingError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            AudioProcessingError::InvalidFile(reason) => {
-                write!(f, "Invalid file error: {reason}")
-            }
-            AudioProcessingError::CannotProcessAudio(reason) => {
-                write!(f, "Audio processing failed: {reason}")
-            }
-        }
-    }
-}
-
+use crate::audio_processing::error::AudioProcessingError;
 
 pub struct AudioStems {
     pub vocals: PathBuf,

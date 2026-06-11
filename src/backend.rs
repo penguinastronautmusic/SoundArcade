@@ -4,7 +4,8 @@
 use std::path::PathBuf;
 use std::time::Duration;
 use log::*;
-use crate::audio_processing::stems::{split_audio_into_stems, AudioProcessingError};
+use crate::audio_processing::error::AudioProcessingError;
+use crate::audio_processing::stems::split_audio_into_stems;
 
 pub struct StemAppData {
     pub main_audio_file: PathBuf,
