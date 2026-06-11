@@ -11,9 +11,10 @@ use std::time::Duration;
 use bevy::prelude::*;
 use bevy::tasks::{AsyncComputeTaskPool, Task};
 use bevy::tasks::futures_lite::future;
-use crate::audio_processing::AudioProcessingError;
+use crate::audio_processing::stems::AudioProcessingError;
 use crate::backend;
 use crate::backend::{AppInput, StemAppData};
+use crate::midware::AppStartSelections;
 use crate::ui::app_state::AppState;
 use crate::ui::error::ErrorTracker;
 use crate::ui::file_handler::SelectedAudioFile;
@@ -23,16 +24,23 @@ pub(crate) struct AudioBackendTask(Task<Result<StemAppData, AudioProcessingError
 
 pub fn start_backend_processing(
     mut commands: Commands,
-    audio_file: Res<SelectedAudioFile>
+    audio_file: Res<SelectedAudioFile>,
+    start_args: Res<AppStartSelections>
 ) {
     let file_path = audio_file.0.clone();
+    info!("Processing audio file at path {:?}", file_path);
+
+    let args = start_args.clone();
     let thread_pool = AsyncComputeTaskPool::get();
+
+    info!("Starting audio processing thread pool. Args: {:?}", &args);
 
     let task = thread_pool.spawn(async move {
         Ok(backend::load_backend(AppInput { 
             audio_file: file_path,
             output_dir: PathBuf::from("output/"),
-            tick_len: Duration::from_millis(100),
+            tick_len: args.tick_len,
+            is_dummy: args.is_dummy_backend
         })?)
     });
 
