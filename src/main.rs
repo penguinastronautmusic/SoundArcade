@@ -59,7 +59,11 @@ fn main() {
         OnExit(AppState::ProcessingAudio), ui::spinner::cleanup)
 
         .add_systems(OnEnter(AppState::CoreApplication), ui::audio_track::setup_audio_tracks)
-        .add_systems(Update, ui::audio_track::track_icon_interaction_system.run_if(in_state(AppState::CoreApplication)))
+        .add_systems(Update, (
+            ui::audio_track::track_icon_interaction_system,
+            ui::audio_track::spawn_audio_squares_system,
+            ui::audio_track::move_and_collide_squares_system,
+        ).run_if(in_state(AppState::CoreApplication)))
 
         .run();
 }

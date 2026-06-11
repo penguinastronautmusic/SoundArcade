@@ -13,7 +13,7 @@ use bevy::tasks::futures_lite::future;
 use crate::audio_processing::error::AudioProcessingError;
 use crate::backend;
 use crate::backend::{AppInput, StemAppData};
-use crate::midware::AppStartSelections;
+use crate::midware::{AppStartSelections, StemResources};
 use crate::ui::app_state::AppState;
 use crate::ui::error::ErrorTracker;
 use crate::ui::file_handler::SelectedAudioFile;
@@ -51,6 +51,7 @@ pub fn monitor_backend(
     mut tasks: Query<(Entity, &mut AudioBackendTask)>,
     mut next_state: ResMut<NextState<AppState>>,
     mut error_msg: ResMut<ErrorTracker>,
+    app_start_selections: Res<AppStartSelections>,
 ) {
     for (entity, mut task) in &mut tasks {
         if let Some(backend_result) = future::block_on(future::poll_once(&mut task.0)) {
@@ -58,7 +59,7 @@ pub fn monitor_backend(
 
             match backend_result {
                 Ok(data) => {
-                    //commands.insert_resource(); TODO add midware resource
+                    commands.insert_resource(StemResources::from_data(data, app_start_selections.tick_len));
                     next_state.set(AppState::CoreApplication);
                 }
                 Err(err) => {
