@@ -42,7 +42,7 @@ pub fn horizontal_slider() -> impl Bundle {
         Slider {
             track_click: TrackClick::Snap,
         },
-        SliderValue(120.0),
+        SliderValue(200.0),
         SliderRange::new(30.0, 300.0),
         TabIndex(0),
         Children::spawn((

@@ -153,6 +153,10 @@ pub fn spawn_audio_squares_system(
     let spacing = 240.0;
     let start_x = -((4.0 - 1.0) * spacing) / 2.0;
 
+    let speed = 200.0;
+    let tick_duration = tick_timer.0.duration().as_secs_f32();
+    let height = (speed * tick_duration - 10.0).max(5.0); // 10.0 units gap, minimum height 5.0
+
     let stems = [
         (&stem_resources.vocals, TrackType::Vocals),
         (&stem_resources.drums, TrackType::Drums),
@@ -168,8 +172,8 @@ pub fn spawn_audio_squares_system(
         if let Some(&db) = stem.db_track.get(current_tick) {
             if db >= 20 {
                 let x = start_x + (i as f32) * spacing;
-                // Width is proportional to DB above 30. Max DB is 100.
-                let width = (db as f32 - 30.0) * 3.0 + 10.0;
+                // Width is proportional to DB above 20. Max DB is 100.
+                let width = (db as f32 - 20.0) * 3.0 + 10.0;
                 let color = match track_type {
                     TrackType::Vocals => Color::srgb(0.0, 1.5, 0.0), // Green
                     TrackType::Drums => Color::srgb(1.5, 0.0, 0.0),  // Red
@@ -178,7 +182,7 @@ pub fn spawn_audio_squares_system(
                 };
 
                 commands.spawn((
-                    Mesh2d(meshes.add(Rectangle::new(width, 40.0))),
+                    Mesh2d(meshes.add(Rectangle::new(width, height))),
                     MeshMaterial2d(materials.add(color)),
                     Transform::from_translation(Vec3::new(x, 400.0, 0.0)),
                     AudioSquare,
