@@ -9,6 +9,14 @@ pub struct TrackIcon {
 #[derive(Component)]
 pub struct AudioSquare;
 
+#[derive(Resource, Default)]
+pub struct PlaybackState {
+    pub is_playing: bool,
+}
+
+#[derive(Component)]
+pub struct PlayButton;
+
 #[derive(Component)]
 pub struct BreathingEffect {
     pub time: f32,
@@ -17,8 +25,7 @@ pub struct BreathingEffect {
 #[derive(Resource, Default)]
 pub struct TickTimer(pub Timer);
 
-
-// 1. Define a resource to hold the handle
+// TODO: Add 3 other images, one per stem
 #[derive(Resource)]
 pub struct MyImage(pub Handle<Image>);
 
@@ -38,8 +45,21 @@ pub fn setup_audio_tracks(
     mut materials: ResMut<Assets<ColorMaterial>>,
     my_image: Res<MyImage>,
     app_start_selections: Res<crate::midware::AppStartSelections>,
+    asset_server: Res<AssetServer>,
 ) {
     commands.insert_resource(TickTimer(Timer::new(app_start_selections.tick_len, TimerMode::Repeating)));
+    commands.insert_resource(PlaybackState { is_playing: false });
+
+    // Spawn Play Button
+    commands.spawn((
+        Sprite {
+            image: asset_server.load("play_button.png"),
+            ..default()
+        },
+        Transform::from_translation(Vec3::new(0.0, 0.0, 10.0)),
+        PlayButton,
+    ));
+
     let spacing = 240.0;
     // Center the 4 tracks horizontally
     let start_x = -((4.0 - 1.0) * spacing) / 2.0;
@@ -148,6 +168,35 @@ pub fn track_icon_interaction_system(
     }
 }
 
+pub fn play_button_system(
+    mut commands: Commands,
+    window_query: Query<&Window>,
+    camera_query: Query<(&Camera, &GlobalTransform), With<Camera2d>>,
+    mut play_button_query: Query<(Entity, &GlobalTransform), With<PlayButton>>,
+    mouse_button_input: Res<ButtonInput<MouseButton>>,
+    mut playback_state: ResMut<PlaybackState>,
+) {
+    let window = if let Ok(w) = window_query.single() { w } else { return };
+    let (camera, camera_transform) = if let Ok(c) = camera_query.single() { c } else { return };
+
+    let cursor_world_pos = window.cursor_position()
+        .and_then(|cursor| camera.viewport_to_world_2d(camera_transform, cursor).ok());
+
+    if let Some(world_position) = cursor_world_pos {
+        for (entity, transform) in play_button_query.iter_mut() {
+            let pos = transform.translation().truncate();
+            let distance = world_position.distance(pos);
+
+            // Assuming a reasonable click radius for the play button
+            if distance < 50.0 && mouse_button_input.just_pressed(MouseButton::Left) {
+                playback_state.is_playing = true;
+                commands.entity(entity).despawn();
+                info!("Play button clicked, starting playback.");
+            }
+        }
+    }
+}
+
 pub fn spawn_audio_squares_system(
     mut commands: Commands,
     time: Res<Time>,
@@ -155,7 +204,13 @@ pub fn spawn_audio_squares_system(
     mut stem_resources: ResMut<StemResources>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    icon_query: Query<(Entity, &TrackIcon)>,
+    playback_state: Res<PlaybackState>,
 ) {
+    if !playback_state.is_playing {
+        return;
+    }
+
     if !tick_timer.0.tick(time.delta()).just_finished() {
         return;
     }
@@ -186,18 +241,27 @@ pub fn spawn_audio_squares_system(
                 // Width is proportional to DB above 20. Max DB is 100.
                 let width = (db as f32 - 20.0) * 3.0 + 10.0;
                 let color = match track_type {
-                    TrackType::Vocals => Color::srgb(0.0, 1.5, 0.0), // Green
-                    TrackType::Drums => Color::srgb(1.5, 0.0, 0.0),  // Red
-                    TrackType::Bass => Color::srgb(0.0, 0.0, 1.5),   // Blue
-                    TrackType::Other => Color::srgb(1.5, 1.5, 0.0),  // Yellow
+                    TrackType::Vocals => Color::srgb(0.0, 2.0, 0.0), // Green
+                    TrackType::Drums => Color::srgb(2.0, 0.0, 0.0),  // Red
+                    TrackType::Bass => Color::srgb(0.0, 0.0, 2.0),   // Blue
+                    TrackType::Other => Color::srgb(2.0, 2.0, 0.0),  // Yellow
                 };
 
                 commands.spawn((
                     Mesh2d(meshes.add(Rectangle::new(width, height))),
                     MeshMaterial2d(materials.add(color)),
-                    Transform::from_translation(Vec3::new(x, 400.0, 0.0)),
+                    Transform::from_translation(Vec3::new(x, -180.0, 0.0)),
                     AudioSquare,
                 ));
+
+                // Trigger breathing effect on the corresponding icon
+                for (icon_entity, icon) in icon_query.iter() {
+                    if icon.track_type == *track_type {
+                        commands.entity(icon_entity).insert(BreathingEffect {
+                            time: 0.2,
+                        });
+                    }
+                }
             }
         }
     }
@@ -209,30 +273,17 @@ pub fn move_and_collide_squares_system(
     mut commands: Commands,
     time: Res<Time>,
     mut square_query: Query<(Entity, &mut Transform), With<AudioSquare>>,
-    icon_query: Query<(Entity, &GlobalTransform), With<TrackIcon>>,
+    playback_state: Res<PlaybackState>,
 ) {
+    if !playback_state.is_playing {
+        return;
+    }
     let speed = 200.0;
     for (entity, mut transform) in square_query.iter_mut() {
-        transform.translation.y -= speed * time.delta_secs();
+        transform.translation.y += speed * time.delta_secs();
 
-        // Collision check
-        let square_pos = transform.translation.truncate();
-        for (icon_entity, icon_transform) in icon_query.iter() {
-            let icon_pos = icon_transform.translation().truncate();
-            let distance = square_pos.distance(icon_pos);
-
-            if distance < 80.0 {
-                commands.entity(icon_entity).insert(BreathingEffect {
-                    time: 0.2, // Effect lasts for 0.2 seconds
-                });
-                
-                commands.entity(entity).despawn();
-                break;
-            }
-        }
-
-        // Cleanup squares that go off-screen
-        if transform.translation.y < -500.0 {
+        // Cleanup squares that go off-screen (top)
+        if transform.translation.y > 500.0 {
             commands.entity(entity).despawn();
         }
     }

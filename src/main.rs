@@ -61,6 +61,7 @@ fn main() {
         .add_systems(OnEnter(AppState::CoreApplication), ui::audio_track::setup_audio_tracks)
         .add_systems(Update, (
             ui::audio_track::track_icon_interaction_system,
+            ui::audio_track::play_button_system,
             ui::audio_track::spawn_audio_squares_system,
             ui::audio_track::move_and_collide_squares_system,
             ui::audio_track::icon_breathing_system,
