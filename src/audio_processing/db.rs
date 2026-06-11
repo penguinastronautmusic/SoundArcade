@@ -8,7 +8,7 @@ use crate::audio_processing::error::AudioProcessingError;
 ///
 /// This function processes an audio file and computes the dB levels for each interval of the
 /// specified `tick_len` duration. It supports mono and stereo audio channels and averages
-/// multi-channel audio into a single mono-like analysis for dB level measurement.
+/// multichannel audio into a single mono-like analysis for dB level measurement.
 ///
 /// # Parameters
 ///
@@ -54,7 +54,7 @@ use crate::audio_processing::error::AudioProcessingError;
 /// - Returns an `AudioProcessingError` if:
 ///   - The WAV file cannot be opened or read.
 ///   - The file format is unsupported or invalid.
-pub fn calculate_db_levels(path: &PathBuf, tick_len: Duration) -> Result<Vec<usize>, AudioProcessingError> {
+pub fn calculate_db_levels(path: &PathBuf, tick_len: &Duration) -> Result<Vec<usize>, AudioProcessingError> {
     info!("Calculating DB levels of {:?}...", path);
     let mut reader = hound::WavReader::open(path)
         .map_err(|e| AudioProcessingError::InvalidFile(format!("Failed to open WAV file: {}", e)))?;
@@ -127,8 +127,8 @@ mod tests {
             writer.finalize().unwrap();
         }
 
-        let tick_len = Duration::from_millis(1000); // 1 second ticks
-        let levels = calculate_db_levels(&wav_path, tick_len).unwrap();
+        let tick_len = Duration::from_millis(1000); // 1-second ticks
+        let levels = calculate_db_levels(&wav_path, &tick_len).unwrap();
 
         assert_eq!(levels.len(), 2);
         assert_eq!(levels[0], 0); // Silence should be 0 (scaled)

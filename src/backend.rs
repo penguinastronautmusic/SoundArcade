@@ -4,6 +4,7 @@
 use std::path::PathBuf;
 use std::time::Duration;
 use log::*;
+use crate::audio_processing::db::calculate_db_levels;
 use crate::audio_processing::error::AudioProcessingError;
 use crate::audio_processing::stems::split_audio_into_stems;
 
@@ -44,26 +45,29 @@ pub fn load_backend(app_input: AppInput) -> Result<StemAppData, AudioProcessingE
     let processed_audio = split_audio_into_stems(&app_input.audio_file, app_input.output_dir)?;
 
     info!("Split successful! Calculating db data per tick.");
-    warn!("TODO!");
+    let vocal_db_levels = calculate_db_levels(&processed_audio.vocals, &app_input.tick_len)?;
+    let bass_db_levels = calculate_db_levels(&processed_audio.bass, &app_input.tick_len)?;
+    let drums_db_levels = calculate_db_levels(&processed_audio.drums, &app_input.tick_len)?;
+    let other_db_levels = calculate_db_levels(&processed_audio.other, &app_input.tick_len)?;
 
     info!("Backend successfully loaded. Returning stem data.");
     Ok(StemAppData {
         main_audio_file: app_input.audio_file,
         vocals: Stem {
             audio_file: processed_audio.vocals,
-            track_db_per_tick: vec!()
+            track_db_per_tick: vocal_db_levels
         },
         bass: Stem {
             audio_file: processed_audio.bass,
-            track_db_per_tick: vec!()
+            track_db_per_tick: bass_db_levels
         },
         drums: Stem {
             audio_file: processed_audio.drums,
-            track_db_per_tick: vec!()
+            track_db_per_tick: drums_db_levels
         },
         other: Stem {
             audio_file: processed_audio.other,
-            track_db_per_tick: vec!()
+            track_db_per_tick: other_db_levels
         },
     })
 }
