@@ -3,7 +3,7 @@
 
 use std::path::PathBuf;
 use std::time::Duration;
-use log::*;
+use bevy::prelude::*;
 use crate::audio_processing::db::calculate_db_levels;
 use crate::audio_processing::error::AudioProcessingError;
 use crate::audio_processing::stems::split_audio_into_stems;
@@ -19,7 +19,7 @@ pub struct StemAppData {
 
 pub struct Stem {
     pub audio_file: PathBuf,
-    pub track_db_per_tick: Vec<usize>
+    pub track_db_per_tick: Vec<usize>,
 }
 
 
@@ -55,19 +55,19 @@ pub fn load_backend(app_input: AppInput) -> Result<StemAppData, AudioProcessingE
         main_audio_file: app_input.audio_file,
         vocals: Stem {
             audio_file: processed_audio.vocals,
-            track_db_per_tick: vocal_db_levels
+            track_db_per_tick: vocal_db_levels,
         },
         bass: Stem {
             audio_file: processed_audio.bass,
-            track_db_per_tick: bass_db_levels
+            track_db_per_tick: bass_db_levels,
         },
         drums: Stem {
             audio_file: processed_audio.drums,
-            track_db_per_tick: drums_db_levels
+            track_db_per_tick: drums_db_levels,
         },
         other: Stem {
             audio_file: processed_audio.other,
-            track_db_per_tick: other_db_levels
+            track_db_per_tick: other_db_levels,
         },
     })
 }
@@ -104,19 +104,19 @@ pub fn load_mock_backend_stems(app_input: AppInput) -> Result<StemAppData, Audio
         main_audio_file: app_input.audio_file,
         vocals: Stem {
             audio_file: PathBuf::from("/dummy_directory/example_vocals.wav"),
-            track_db_per_tick: generate_sinusoidal_db(0.0, 0.05),
+            track_db_per_tick: generate_sinusoidal_db(0.0, 0.05)
         },
         bass: Stem {
             audio_file: PathBuf::from("/dummy_directory/example_bass.wav"),
-            track_db_per_tick: generate_sinusoidal_db(2.0, 0.02),
+            track_db_per_tick: generate_sinusoidal_db(2.0, 0.02)
         },
         drums: Stem {
             audio_file: PathBuf::from("/dummy_directory/example_drums.wav"),
-            track_db_per_tick: generate_sinusoidal_db(4.0, 0.08),
+            track_db_per_tick: generate_sinusoidal_db(4.0, 0.08)
         },
         other: Stem {
             audio_file: PathBuf::from("/dummy_directory/example_other.wav"),
-            track_db_per_tick: generate_sinusoidal_db(1.5, 0.04),
+            track_db_per_tick: generate_sinusoidal_db(1.5, 0.04)
         },
     })
 }

@@ -80,7 +80,6 @@ pub(crate) fn setup(mut commands: Commands) {
             justify_self: JustifySelf::Center,
             ..default()
         },
-        DurationText,
         DespawnOnExit(AppState::ProcessingAudio)
     ));
 

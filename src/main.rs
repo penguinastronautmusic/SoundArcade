@@ -59,6 +59,7 @@ fn main() {
         OnExit(AppState::ProcessingAudio), ui::spinner::cleanup)
 
         .add_systems(OnEnter(AppState::CoreApplication), ui::audio_track::setup_audio_tracks)
+        .add_systems(Update, ui::audio_track::track_icon_interaction_system.run_if(in_state(AppState::CoreApplication)))
 
         .run();
 }
@@ -72,7 +73,7 @@ fn setup(mut commands: Commands,
             clear_color: ClearColorConfig::Custom(Color::BLACK),
             ..default()
         },
-        Tonemapping::TonyMcMapface, // 1. Using a tonemapper that desaturates to white is recommended
+        Tonemapping::TonyMcMapface, // 1. Using a tone mapper that desaturates to white is recommended
         Bloom::default(),           // 2. Enable bloom for the camera
         DebandDither::Enabled,      // Optional: bloom causes gradients which cause banding
     ));

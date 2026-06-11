@@ -1,23 +1,25 @@
-use bevy::ecs::event::{EntityTrigger, Trigger};
 use bevy::prelude::*;
+use crate::midware::TrackType;
 
 #[derive(Component)]
 pub struct TrackIcon {
     pub track_type: TrackType,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum TrackType {
-    Vocals,
-    Drums,
-    Bass,
-    Other,
-}
-
 
 // 1. Define a resource to hold the handle
 #[derive(Resource)]
 pub struct MyImage(pub Handle<Image>);
+
+
+#[derive(Component)]
+pub(crate) struct VocalsTrackIcon;
+#[derive(Component)]
+pub(crate) struct DrumsTrackIcon;
+#[derive(Component)]
+pub(crate) struct BassTrackIcon;
+#[derive(Component)]
+pub(crate) struct OtherTrackIcon;
 
 pub fn setup_audio_tracks(
     mut commands: Commands,
@@ -52,29 +54,54 @@ pub fn setup_audio_tracks(
         ));
 
         // Spawn the track button/icon at the bottom of the screen
-        commands.spawn((
+        let mut entity = commands.spawn((
             Sprite {
                 image: my_image.0.clone(),
                 color: Color::srgb(5.0, 5.0, 5.0),
                 ..default()
             },
             Transform::from_translation(Vec3::new(x, -250., -1.)),
-        ))
-            // 1. Detect Clicks
-            .observe(|trigger: Trigger<Pointer<Click>>| {
-                println!("Track button clicked!");
-            })
-            // 2. Detect Hover (Pointer Over) to make it feel like a button
-            .observe(|trigger: Trigger<Pointer<Over>>, mut sprites: Query<&mut Sprite>| {
-                if let Ok(mut sprite) = sprites.get_mut(trigger.entity()) {
-                    sprite.color = Color::srgb(8.0, 8.0, 8.0); // Highlight color
+            TrackIcon {
+                track_type: *track_type,
+            },
+        ));
+
+        match track_type {
+            TrackType::Vocals => entity.insert(VocalsTrackIcon),
+            TrackType::Drums => entity.insert(DrumsTrackIcon),
+            TrackType::Bass => entity.insert(BassTrackIcon),
+            TrackType::Other => entity.insert(OtherTrackIcon),
+        };
+    }
+}
+
+pub fn track_icon_interaction_system(
+    window_query: Query<&Window>,
+    camera_query: Query<(&Camera, &GlobalTransform), With<Camera2d>>,
+    mut icon_query: Query<(&mut Sprite, &GlobalTransform), With<TrackIcon>>,
+) {
+    let window = if let Ok(w) = window_query.single() { w } else { return };
+    let (camera, camera_transform) = if let Ok(c) = camera_query.single() { c } else { return };
+
+    if let Some(cursor) = window.cursor_position() {
+        if let Ok(world_position) = camera.viewport_to_world_2d(camera_transform, cursor) {
+            for (mut sprite, transform) in icon_query.iter_mut() {
+                let icon_pos = transform.translation().truncate();
+                let distance = world_position.distance(icon_pos);
+
+                // Assuming the icon is roughly 40 units in radius based on icon_mesh
+                if distance < 40.0 {
+                    sprite.color = Color::srgb(10.0, 10.0, 10.0);
+                } else {
+                    sprite.color = Color::srgb(5.0, 5.0, 5.0);
                 }
-            })
-            // 3. Detect Hover End (Pointer Out) to revert the color
-            .observe(|trigger: Trigger<Pointer<Out>>, mut sprites: Query<&mut Sprite>| {
-                if let Ok(mut sprite) = sprites.get_mut(trigger.entity()) {
-                    sprite.color = Color::srgb(5.0, 5.0, 5.0); // Normal color
-                }
-            });
+            }
+            return;
+        }
+    }
+
+    // Reset colors if no hover detected
+    for (mut sprite, _) in icon_query.iter_mut() {
+        sprite.color = Color::srgb(5.0, 5.0, 5.0);
     }
 }

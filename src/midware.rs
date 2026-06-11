@@ -15,3 +15,11 @@ pub struct AppStartSelections {
     pub is_dummy_backend: bool
 }
 
+#[derive(Copy, Clone, Debug)]
+pub enum TrackType {
+    Vocals,
+    Drums,
+    Bass,
+    Other
+}
+

@@ -57,7 +57,10 @@ pub fn monitor_backend(
             commands.entity(entity).despawn();
 
             match backend_result {
-                Ok(_) => next_state.set(AppState::CoreApplication),
+                Ok(data) => {
+                    //commands.insert_resource(); TODO add midware resource
+                    next_state.set(AppState::CoreApplication);
+                }
                 Err(err) => {
                     error_msg.message = format!("Error processing audio: {err}");
                     eprintln!("{}", &error_msg.message);
