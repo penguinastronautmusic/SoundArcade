@@ -83,9 +83,13 @@ fn setup(mut commands: Commands,
         Bloom::default(),           // 2. Enable bloom for the camera
         DebandDither::Enabled,      // Optional: bloom causes gradients which cause banding
     ));
-    // 2. Load the image from the assets/ folder
-    let handle: Handle<Image> = asset_server.load("badmic.png");
 
-    // 3. Insert the handle as a resource
-    commands.insert_resource(ui::audio_track::MyImage(handle));
+    let handle: Handle<Image> = asset_server.load("microphone.png");
+    commands.insert_resource(ui::audio_track::MicImage(handle));
+    let handle: Handle<Image> = asset_server.load("bass.png");
+    commands.insert_resource(ui::audio_track::BassImage(handle));
+    let handle: Handle<Image> = asset_server.load("drums.png");
+    commands.insert_resource(ui::audio_track::DrumImage(handle));
+    let handle: Handle<Image> = asset_server.load("other.png");
+    commands.insert_resource(ui::audio_track::OtherImage(handle));
 }

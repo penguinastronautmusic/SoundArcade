@@ -25,9 +25,14 @@ pub struct BreathingEffect {
 #[derive(Resource, Default)]
 pub struct TickTimer(pub Timer);
 
-// TODO: Add 3 other images, one per stem
 #[derive(Resource)]
-pub struct MyImage(pub Handle<Image>);
+pub struct MicImage(pub Handle<Image>);
+#[derive(Resource)]
+pub struct BassImage(pub Handle<Image>);
+#[derive(Resource)]
+pub struct DrumImage(pub Handle<Image>);
+#[derive(Resource)]
+pub struct OtherImage(pub Handle<Image>);
 
 
 #[derive(Component)]
@@ -43,7 +48,10 @@ pub fn setup_audio_tracks(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    my_image: Res<MyImage>,
+    mic_image: Res<MicImage>,
+    drum_image: Res<DrumImage>,
+    bass_image: Res<BassImage>,
+    other_image: Res<OtherImage>,
     app_start_selections: Res<crate::midware::AppStartSelections>,
     asset_server: Res<AssetServer>,
 ) {
@@ -79,17 +87,23 @@ pub fn setup_audio_tracks(
     for (i, (track_type, _color)) in tracks.iter().enumerate() {
         let x = start_x + (i as f32) * spacing;
 
-        // Spawn the track line (faded highway)
         commands.spawn((
             Mesh2d(track_mesh.clone()),
             MeshMaterial2d(materials.add(color_dark_grey.with_alpha(0.1))),
             Transform::from_translation(Vec3::new(x, 100., -1.)),
         ));
 
+        let icon_image = match track_type {
+            TrackType::Vocals => mic_image.0.clone(),
+            TrackType::Drums => drum_image.0.clone(),
+            TrackType::Bass => bass_image.0.clone(),
+            TrackType::Other => other_image.0.clone(),
+        };
+
         // Spawn the track button/icon at the bottom of the screen
         let mut entity = commands.spawn((
             Sprite {
-                image: my_image.0.clone(),
+                image: icon_image,
                 color: Color::srgb(5.0, 5.0, 5.0),
                 ..default()
             },
@@ -221,7 +235,7 @@ pub fn spawn_audio_squares_system(
 
     let speed = 200.0;
     let tick_duration = tick_timer.0.duration().as_secs_f32();
-    let height = (speed * tick_duration - 10.0).max(5.0); // 10.0 units gap, minimum height 5.0
+    let height = (speed * tick_duration - 15.0).max(5.0); // 15.0 units gap, minimum height 5.0
 
     let stems = [
         (&stem_resources.vocals, TrackType::Vocals),
@@ -239,12 +253,12 @@ pub fn spawn_audio_squares_system(
             if db >= 20 {
                 let x = start_x + (i as f32) * spacing;
                 // Width is proportional to DB above 20. Max DB is 100.
-                let width = (db as f32 - 20.0) * 3.0 + 10.0;
+                let width = (db as f32 - 20.0) * 3.0;
                 let color = match track_type {
-                    TrackType::Vocals => Color::srgb(0.0, 2.0, 0.0), // Green
-                    TrackType::Drums => Color::srgb(2.0, 0.0, 0.0),  // Red
-                    TrackType::Bass => Color::srgb(0.0, 0.0, 2.0),   // Blue
-                    TrackType::Other => Color::srgb(2.0, 2.0, 0.0),  // Yellow
+                    TrackType::Vocals => Color::srgb(2.0, 0.0, 1.0),
+                    TrackType::Drums => Color::srgb(2.0, 2.0, 0.0),
+                    TrackType::Bass => Color::srgb(1.0, 0.0, 2.0),
+                    TrackType::Other => Color::srgb(0.0, 1.0, 2.0),
                 };
 
                 commands.spawn((
