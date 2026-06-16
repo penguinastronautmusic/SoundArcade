@@ -11,9 +11,6 @@ pub struct TrackIcon {
 pub struct AudioSquare;
 
 #[derive(Component)]
-pub struct PlayButton;
-
-#[derive(Component)]
 pub struct BreathingEffect {
     pub time: f32,
 }
@@ -49,19 +46,9 @@ pub fn setup_audio_tracks(
     bass_image: Res<BassImage>,
     other_image: Res<OtherImage>,
     app_start_selections: Res<crate::midware::AppStartSelections>,
-    asset_server: Res<AssetServer>,
 ) {
     commands.insert_resource(TickTimer(Timer::new(app_start_selections.tick_len, TimerMode::Repeating)));
-    
-    // Spawn Play Button
-    commands.spawn((
-        Sprite {
-            image: asset_server.load("play_button.png"),
-            ..default()
-        },
-        Transform::from_translation(Vec3::new(0.0, 0.0, 10.0)),
-        PlayButton,
-    ));
+
 
     let spacing = 240.0;
     // Center the 4 tracks horizontally
@@ -192,43 +179,6 @@ pub fn track_icon_interaction_system(
     }
 }
 
-pub fn play_button_system(
-    mut commands: Commands,
-    window_query: Query<&Window>,
-    camera_query: Query<(&Camera, &GlobalTransform), With<Camera2d>>,
-    mut play_button_query: Query<(Entity, &GlobalTransform), With<PlayButton>>,
-    mouse_button_input: Res<ButtonInput<MouseButton>>,
-    mut playback_state: ResMut<PlaybackState>,
-    mut vocals_state: ResMut<VocalsState>,
-    mut drums_state: ResMut<DrumsState>,
-    mut bass_state: ResMut<BassState>,
-    mut other_state: ResMut<OthersState>,
-) {
-    let window = if let Ok(w) = window_query.single() { w } else { return };
-    let (camera, camera_transform) = if let Ok(c) = camera_query.single() { c } else { return };
-
-    let cursor_world_pos = window.cursor_position()
-        .and_then(|cursor| camera.viewport_to_world_2d(camera_transform, cursor).ok());
-
-    if let Some(world_position) = cursor_world_pos {
-        for (entity, transform) in play_button_query.iter_mut() {
-            let pos = transform.translation().truncate();
-            let distance = world_position.distance(pos);
-
-            // 50 click radius for the play button
-            if distance < 50.0 && mouse_button_input.just_pressed(MouseButton::Left) {
-                vocals_state.is_active = true;
-                drums_state.is_active = true;
-                bass_state.is_active = true;
-                other_state.is_active = true;
-                playback_state.is_playing = true;
-                playback_state.has_changed = true;
-                commands.entity(entity).despawn();
-                info!("Play button clicked.");
-            }
-        }
-    }
-}
 
 pub fn spawn_audio_squares_system(
     mut commands: Commands,

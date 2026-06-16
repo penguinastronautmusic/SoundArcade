@@ -1,3 +1,7 @@
+//! UI system to use the music, reponding to the states of the song and each stems.
+//! Other UI components will modify the state of the audio, and this will respond to it
+//! by starting the song, muting stems, etc.
+
 use bevy::audio::{AudioSink, AudioSinkPlayback};
 use bevy::log::{info, warn};
 use bevy::prelude::{Commands, Query, ResMut, Resource, With};
@@ -7,12 +11,13 @@ use crate::ui::process_audio::{BassStemAudio, DrumsStemAudio, OtherStemAudio, Vo
 #[derive(Resource, Default)]
 pub struct PlaybackState {
     pub is_playing: bool,
-    pub has_changed: bool
+    pub has_changed: bool,
 }
 
 
 pub fn setup_audio_controller(mut commands: Commands) {
-    // Starting Playback state to "Changed==True" because Bevy plays the audio on load.
+    // Starting Playback state to "Changed==True" because
+    // Bevy plays the audio upon loading the file.
     // See ProcessAudio for loading of the audio files.
     commands.insert_resource(PlaybackState { is_playing: false, has_changed: true });
     commands.insert_resource(VocalsState { is_active: false, has_changed: false });

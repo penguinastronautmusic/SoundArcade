@@ -14,3 +14,4 @@ pub(crate) mod spinner;
 pub(crate) mod bpm_slider;
 pub(crate) mod audio_track;
 pub(crate) mod audio_controller;
+pub(crate) mod play_stop_reset_btns;

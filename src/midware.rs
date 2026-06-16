@@ -58,7 +58,9 @@ fn set_dir_to_asset_folder(stem_path: &PathBuf) -> PathBuf {
 
 #[derive(Default)]
 pub struct StemResource {
+    #[allow(dead_code)]
     pub stem_type: TrackType,
+    #[allow(dead_code)]
     pub stem_path: PathBuf,
     pub db_track: Vec<usize>,
     pub tick_len: Duration,

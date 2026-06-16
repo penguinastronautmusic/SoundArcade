@@ -10,6 +10,7 @@ use crate::audio_processing::stems::split_audio_into_stems;
 
 #[derive(Clone)]
 pub struct StemAppData {
+    #[allow(dead_code)]
     pub main_audio_file: PathBuf,
     pub vocals: Stem,
     pub bass: Stem,
@@ -104,19 +105,19 @@ pub fn load_mock_backend_stems(app_input: AppInput) -> Result<StemAppData, Audio
     Ok(StemAppData {
         main_audio_file: app_input.audio_file,
         vocals: Stem {
-            audio_file: PathBuf::from("/dummy_directory/example_vocals.wav"),
+            audio_file: PathBuf::from("assets/output/example_free_audio_vocals.wav"),
             track_db_per_tick: generate_sinusoidal_db(0.0, 0.05)
         },
         bass: Stem {
-            audio_file: PathBuf::from("/dummy_directory/example_bass.wav"),
+            audio_file: PathBuf::from("assets/output/example_free_audio_bass.wav"),
             track_db_per_tick: generate_sinusoidal_db(2.0, 0.02)
         },
         drums: Stem {
-            audio_file: PathBuf::from("/dummy_directory/example_drums.wav"),
+            audio_file: PathBuf::from("assets/output/example_free_audio_drums.wav"),
             track_db_per_tick: generate_sinusoidal_db(4.0, 0.08)
         },
         other: Stem {
-            audio_file: PathBuf::from("/dummy_directory/example_other.wav"),
+            audio_file: PathBuf::from("assets/output/example_free_audio_other.wav"),
             track_db_per_tick: generate_sinusoidal_db(1.5, 0.04)
         },
     })
