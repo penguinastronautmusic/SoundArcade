@@ -4,8 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-bevy = { version = "0.18", features = ["default", "experimental_bevy_ui_widgets"] }
+bevy = { version = "0.18", features = ["default", "debug", "wav", "experimental_bevy_ui_widgets"] }
 stem-splitter-core = "1.2.0"
 rfd = "0.17.2"
-log = "0.4.30"
 hound = "3.5.0"

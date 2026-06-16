@@ -3,6 +3,7 @@
 
 use std::path::PathBuf;
 use std::time::Duration;
+use bevy::log::{debug};
 use bevy::prelude::Resource;
 use crate::backend;
 
@@ -20,35 +21,39 @@ impl StemResources {
         Self {
             vocals: StemResource {
                 stem_type: TrackType::Vocals,
-                stem_path: data.vocals.audio_file,
+                stem_path: set_dir_to_asset_folder(&data.vocals.audio_file),
                 db_track: data.vocals.track_db_per_tick,
                 tick_len,
-                is_active: true,
             },
             bass: StemResource {
                 stem_type: TrackType::Bass,
-                stem_path: data.bass.audio_file,
+                stem_path: set_dir_to_asset_folder(&data.bass.audio_file),
                 db_track: data.bass.track_db_per_tick,
                 tick_len,
-                is_active: true,
             },
             drums: StemResource {
                 stem_type: TrackType::Drums,
-                stem_path: data.drums.audio_file,
+                stem_path: set_dir_to_asset_folder(&data.drums.audio_file),
                 db_track: data.drums.track_db_per_tick,
                 tick_len,
-                is_active: true,
             },
             other: StemResource {
                 stem_type: TrackType::Other,
-                stem_path: data.other.audio_file,
+                stem_path: set_dir_to_asset_folder(&data.other.audio_file),
                 db_track: data.other.track_db_per_tick,
                 tick_len,
-                is_active: true,
             },
             current_tick: 0,
         }
     }
+}
+
+/// Helper function to reset the path to the proper asset folder.
+/// Bevy's asset server expects everything to already be in the "asset-folder", so no need
+/// to keep the prefix, which was necessary to have the full relative path to the project.
+fn set_dir_to_asset_folder(stem_path: &PathBuf) -> PathBuf {
+    debug!("Setting stem path to asset folder: {:?}", stem_path);
+    stem_path.strip_prefix("assets").unwrap().to_owned()
 }
 
 #[derive(Default)]
@@ -57,7 +62,6 @@ pub struct StemResource {
     pub stem_path: PathBuf,
     pub db_track: Vec<usize>,
     pub tick_len: Duration,
-    pub is_active: bool
 }
 
 #[derive(Resource, Clone, Debug)]

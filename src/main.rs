@@ -58,13 +58,20 @@ fn main() {
         .add_systems(
         OnExit(AppState::ProcessingAudio), ui::spinner::cleanup)
 
-        .add_systems(OnEnter(AppState::CoreApplication), ui::audio_track::setup_audio_tracks)
+        .add_systems(OnEnter(AppState::CoreApplication), (
+            ui::audio_controller::setup_audio_controller,
+            ui::audio_track::setup_audio_tracks,))
         .add_systems(Update, (
             ui::audio_track::track_icon_interaction_system,
             ui::audio_track::play_button_system,
             ui::audio_track::spawn_audio_squares_system,
             ui::audio_track::move_and_collide_squares_system,
             ui::audio_track::icon_breathing_system,
+            ui::audio_controller::play_stop_system,
+            ui::audio_controller::check_vocals_mute_system,
+            ui::audio_controller::check_bass_mute_system,
+            ui::audio_controller::check_drums_mute_system,
+            ui::audio_controller::check_other_mute_system,
         ).run_if(in_state(AppState::CoreApplication)))
 
         .run();

@@ -8,6 +8,7 @@ use crate::audio_processing::db::calculate_db_levels;
 use crate::audio_processing::error::AudioProcessingError;
 use crate::audio_processing::stems::split_audio_into_stems;
 
+#[derive(Clone)]
 pub struct StemAppData {
     pub main_audio_file: PathBuf,
     pub vocals: Stem,
@@ -16,7 +17,7 @@ pub struct StemAppData {
     pub other: Stem
 }
 
-
+#[derive(Clone)]
 pub struct Stem {
     pub audio_file: PathBuf,
     pub track_db_per_tick: Vec<usize>,

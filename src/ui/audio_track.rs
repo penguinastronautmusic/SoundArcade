@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use crate::midware::{TrackType, StemResources};
+use crate::ui::audio_controller::{BassState, DrumsState, OthersState, PlaybackState, VocalsState};
 
 #[derive(Component)]
 pub struct TrackIcon {
@@ -8,11 +9,6 @@ pub struct TrackIcon {
 
 #[derive(Component)]
 pub struct AudioSquare;
-
-#[derive(Resource, Default)]
-pub struct PlaybackState {
-    pub is_playing: bool,
-}
 
 #[derive(Component)]
 pub struct PlayButton;
@@ -56,8 +52,7 @@ pub fn setup_audio_tracks(
     asset_server: Res<AssetServer>,
 ) {
     commands.insert_resource(TickTimer(Timer::new(app_start_selections.tick_len, TimerMode::Repeating)));
-    commands.insert_resource(PlaybackState { is_playing: false });
-
+    
     // Spawn Play Button
     commands.spawn((
         Sprite {
@@ -126,9 +121,12 @@ pub fn track_icon_interaction_system(
     window_query: Query<&Window>,
     camera_query: Query<(&Camera, &GlobalTransform), With<Camera2d>>,
     mut icon_query: Query<(Entity, &mut Sprite, &GlobalTransform, &TrackIcon)>,
-    mut stem_resources: ResMut<StemResources>,
     mouse_button_input: Res<ButtonInput<MouseButton>>,
     breathing_query: Query<&BreathingEffect>,
+    mut vocals_state: ResMut<VocalsState>,
+    mut drums_state: ResMut<DrumsState>,
+    mut bass_state: ResMut<BassState>,
+    mut other_state: ResMut<OthersState>,
 ) {
     let window = if let Ok(w) = window_query.single() { w } else { return };
     let (camera, camera_transform) = if let Ok(c) = camera_query.single() { c } else { return };
@@ -138,10 +136,10 @@ pub fn track_icon_interaction_system(
 
     for (entity, mut sprite, transform, track_icon) in icon_query.iter_mut() {
         let is_active = match track_icon.track_type {
-            TrackType::Vocals => stem_resources.vocals.is_active,
-            TrackType::Drums => stem_resources.drums.is_active,
-            TrackType::Bass => stem_resources.bass.is_active,
-            TrackType::Other => stem_resources.other.is_active,
+            TrackType::Vocals => vocals_state.is_active,
+            TrackType::Drums => drums_state.is_active,
+            TrackType::Bass => bass_state.is_active,
+            TrackType::Other => other_state.is_active,
         };
 
         // Handle interaction
@@ -152,20 +150,32 @@ pub fn track_icon_interaction_system(
             if distance < 40.0 && mouse_button_input.just_pressed(MouseButton::Left) {
                 match track_icon.track_type {
                     TrackType::Vocals => {
-                        stem_resources.vocals.is_active = !stem_resources.vocals.is_active;
-                        info!("Toggled Vocals is_active to: {}", stem_resources.vocals.is_active);
+                        if !vocals_state.has_changed {
+                            vocals_state.is_active = !vocals_state.is_active;
+                            vocals_state.has_changed = true;
+                            info!("Toggled Vocals is_active to: {}", vocals_state.is_active);
+                        }
                     }
                     TrackType::Drums => {
-                        stem_resources.drums.is_active = !stem_resources.drums.is_active;
-                        info!("Toggled Drums is_active to: {}", stem_resources.drums.is_active);
+                        if !drums_state.has_changed {
+                            drums_state.is_active = !drums_state.is_active;
+                            drums_state.has_changed = true;
+                            info!("Toggled Drums is_active to: {}", drums_state.is_active);
+                        }
                     }
                     TrackType::Bass => {
-                        stem_resources.bass.is_active = !stem_resources.bass.is_active;
-                        info!("Toggled Bass is_active to: {}", stem_resources.bass.is_active);
+                        if !bass_state.has_changed {
+                            bass_state.is_active = !bass_state.is_active;
+                            bass_state.has_changed = true;
+                            info!("Toggled Bass is_active to: {}", bass_state.is_active);
+                        }
                     }
                     TrackType::Other => {
-                        stem_resources.other.is_active = !stem_resources.other.is_active;
-                        info!("Toggled Other is_active to: {}", stem_resources.other.is_active);
+                        if !other_state.has_changed {
+                            other_state.is_active = !other_state.is_active;
+                            other_state.has_changed = true;
+                            info!("Toggled Other is_active to: {}", other_state.is_active);
+                        }
                     }
                 }
             }
@@ -189,6 +199,10 @@ pub fn play_button_system(
     mut play_button_query: Query<(Entity, &GlobalTransform), With<PlayButton>>,
     mouse_button_input: Res<ButtonInput<MouseButton>>,
     mut playback_state: ResMut<PlaybackState>,
+    mut vocals_state: ResMut<VocalsState>,
+    mut drums_state: ResMut<DrumsState>,
+    mut bass_state: ResMut<BassState>,
+    mut other_state: ResMut<OthersState>,
 ) {
     let window = if let Ok(w) = window_query.single() { w } else { return };
     let (camera, camera_transform) = if let Ok(c) = camera_query.single() { c } else { return };
@@ -201,11 +215,16 @@ pub fn play_button_system(
             let pos = transform.translation().truncate();
             let distance = world_position.distance(pos);
 
-            // Assuming a reasonable click radius for the play button
+            // 50 click radius for the play button
             if distance < 50.0 && mouse_button_input.just_pressed(MouseButton::Left) {
+                vocals_state.is_active = true;
+                drums_state.is_active = true;
+                bass_state.is_active = true;
+                other_state.is_active = true;
                 playback_state.is_playing = true;
+                playback_state.has_changed = true;
                 commands.entity(entity).despawn();
-                info!("Play button clicked, starting playback.");
+                info!("Play button clicked.");
             }
         }
     }
@@ -220,6 +239,10 @@ pub fn spawn_audio_squares_system(
     mut materials: ResMut<Assets<ColorMaterial>>,
     icon_query: Query<(Entity, &TrackIcon)>,
     playback_state: Res<PlaybackState>,
+    vocals_state: Res<VocalsState>,
+    drums_state: Res<DrumsState>,
+    bass_state: Res<BassState>,
+    other_state: Res<OthersState>,
 ) {
     if !playback_state.is_playing {
         return;
@@ -238,14 +261,14 @@ pub fn spawn_audio_squares_system(
     let height = (speed * tick_duration - 15.0).max(5.0); // 15.0 units gap, minimum height 5.0
 
     let stems = [
-        (&stem_resources.vocals, TrackType::Vocals),
-        (&stem_resources.drums, TrackType::Drums),
-        (&stem_resources.bass, TrackType::Bass),
-        (&stem_resources.other, TrackType::Other),
+        (&stem_resources.vocals, TrackType::Vocals, vocals_state.is_active),
+        (&stem_resources.drums, TrackType::Drums, drums_state.is_active),
+        (&stem_resources.bass, TrackType::Bass, bass_state.is_active),
+        (&stem_resources.other, TrackType::Other, other_state.is_active),
     ];
 
-    for (i, (stem, track_type)) in stems.iter().enumerate() {
-        if !stem.is_active {
+    for (i, (stem, track_type, is_active)) in stems.iter().enumerate() {
+        if !is_active {
             continue;
         }
 
@@ -307,16 +330,19 @@ pub fn icon_breathing_system(
     mut commands: Commands,
     time: Res<Time>,
     mut query: Query<(Entity, &mut Sprite, &mut BreathingEffect, &TrackIcon)>,
-    stem_resources: Res<StemResources>,
+    vocals_state: Res<VocalsState>,
+    drums_state: Res<DrumsState>,
+    bass_state: Res<BassState>,
+    other_state: Res<OthersState>,
 ) {
     for (entity, mut sprite, mut effect, track_icon) in query.iter_mut() {
         effect.time -= time.delta_secs();
         
         let is_active = match track_icon.track_type {
-            TrackType::Vocals => stem_resources.vocals.is_active,
-            TrackType::Drums => stem_resources.drums.is_active,
-            TrackType::Bass => stem_resources.bass.is_active,
-            TrackType::Other => stem_resources.other.is_active,
+            TrackType::Vocals => vocals_state.is_active,
+            TrackType::Drums => drums_state.is_active,
+            TrackType::Bass => bass_state.is_active,
+            TrackType::Other => other_state.is_active,
         };
 
         let base_color = if is_active {
@@ -346,3 +372,4 @@ pub fn icon_breathing_system(
         }
     }
 }
+

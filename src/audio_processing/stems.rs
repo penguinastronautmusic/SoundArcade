@@ -31,6 +31,38 @@ pub fn split_audio_into_stems(audio_file: &PathBuf, output_dir: PathBuf) -> Resu
         Some(path) => {path.to_string()}
     };
 
+    if let Some(file_name) = audio_file.file_stem() {
+        if let Some(file_name) = file_name.to_str() {
+            let output_vocals_file = output_dir.join(PathBuf::from(file_name.to_owned() + "_vocals.wav"));
+            let output_bass_file = output_dir.join(PathBuf::from(file_name.to_owned() + "_bass.wav"));
+            let output_drums_file = output_dir.join(PathBuf::from(file_name.to_owned() + "_drums.wav"));
+            let output_other_file = output_dir.join(PathBuf::from(file_name.to_owned() + "_other.wav"));
+
+            if check_all_paths_exists(&output_vocals_file, &output_bass_file,
+                                      &output_drums_file, &output_other_file) {
+                info!("File {:?} already processed. Skipping processing.", audio_file);
+                return Ok(AudioStems{
+                    vocals: output_vocals_file,
+                    bass: output_bass_file,
+                    drums: output_drums_file,
+                    other: output_other_file,
+                });
+            }
+        }
+    }
+
+    fn check_all_paths_exists(output_vocals_file: &PathBuf,
+                              output_bass_file: &PathBuf,
+                              output_drums_file: &PathBuf,
+                              output_other_file: &PathBuf) -> bool {
+        let output_vocals_path_exists = std::fs::exists(output_vocals_file).unwrap_or(false);
+        let output_bass_path_exists = std::fs::exists(output_bass_file).unwrap_or(false);
+        let output_drums_path_exists = std::fs::exists(output_drums_file).unwrap_or(false);
+        let output_other_path_exists = std::fs::exists(output_other_file).unwrap_or(false);
+
+        output_vocals_path_exists && output_bass_path_exists && output_drums_path_exists && output_other_path_exists
+    }
+
     info!("Splitting audio file {audio_file_owned} into its stems...");
 
     let options = SplitOptions {

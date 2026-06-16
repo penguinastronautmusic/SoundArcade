@@ -37,7 +37,7 @@ pub fn start_backend_processing(
     let task = thread_pool.spawn(async move {
         Ok(backend::load_backend(AppInput { 
             audio_file: file_path,
-            output_dir: PathBuf::from("output/"),
+            output_dir: PathBuf::from("assets/output/"),
             tick_len: args.tick_len,
             is_dummy: args.is_dummy_backend
         })?)
@@ -46,11 +46,21 @@ pub fn start_backend_processing(
     commands.spawn(AudioBackendTask(task));
 }
 
+#[derive(Component)]
+pub(crate) struct VocalsStemAudio;
+#[derive(Component)]
+pub(crate) struct BassStemAudio;
+#[derive(Component)]
+pub(crate) struct DrumsStemAudio;
+#[derive(Component)]
+pub(crate) struct OtherStemAudio;
+
 pub fn monitor_backend(
     mut commands: Commands,
     mut tasks: Query<(Entity, &mut AudioBackendTask)>,
     mut next_state: ResMut<NextState<AppState>>,
     mut error_msg: ResMut<ErrorTracker>,
+    asset_server: Res<AssetServer>,
     app_start_selections: Res<AppStartSelections>,
 ) {
     for (entity, mut task) in &mut tasks {
@@ -59,7 +69,27 @@ pub fn monitor_backend(
 
             match backend_result {
                 Ok(data) => {
-                    commands.insert_resource(StemResources::from_data(data, app_start_selections.tick_len));
+                    info!("Audio processing completed successfully. Loading audio into Bevy.");
+                    let stem_resources = StemResources::from_data(data, app_start_selections.tick_len);
+
+                    info!("Spanning vocals audio {:?}", stem_resources.vocals.stem_path);
+                    commands.spawn((
+                        AudioPlayer::new(asset_server.load(stem_resources.vocals.stem_path.clone())),
+                        VocalsStemAudio,
+                    ));
+                    commands.spawn((
+                        AudioPlayer::new(asset_server.load(stem_resources.bass.stem_path.clone())),
+                        BassStemAudio,
+                    ));
+                    commands.spawn((
+                        AudioPlayer::new(asset_server.load(stem_resources.drums.stem_path.clone())),
+                        DrumsStemAudio,
+                    ));
+                    commands.spawn((
+                        AudioPlayer::new(asset_server.load(stem_resources.other.stem_path.clone())),
+                        OtherStemAudio,
+                    ));
+                    commands.insert_resource(stem_resources);
                     next_state.set(AppState::CoreApplication);
                 }
                 Err(err) => {
