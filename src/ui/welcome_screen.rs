@@ -56,7 +56,6 @@ pub fn spawn_welcome_screen(mut commands: Commands) {
                 Text::new("Instructions:\n\
                 Adjust the BPM (beats per minute) slider to a higher or lower frequency.\n\
                 This will determine how fast or how slow the bars are going to move. \n\
-                A higher frequency means that there will be \n\
                 \n\
                 Click 'Select file' to parse a track into drums, vocals, bass and others. \n\
                 Note that this can take some time. If you want to see it in action with dummy data,\n\
