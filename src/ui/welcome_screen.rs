@@ -53,7 +53,7 @@ pub fn spawn_welcome_screen(mut commands: Commands) {
 
             // Tool Instructions Paragraph
             parent.spawn((
-                Text::new("Instructions:\n\
+                Text::new("
                 Adjust the BPM (beats per minute) slider to a higher or lower frequency.\n\
                 This will determine how fast or how slow the bars are going to move. \n\
                 \n\
