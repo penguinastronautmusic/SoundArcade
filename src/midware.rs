@@ -63,6 +63,7 @@ pub struct StemResource {
     #[allow(dead_code)]
     pub stem_path: PathBuf,
     pub db_track: Vec<usize>,
+    #[allow(dead_code)]
     pub tick_len: Duration,
 }
 

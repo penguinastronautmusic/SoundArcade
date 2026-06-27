@@ -64,12 +64,13 @@ fn main() {
             ui::audio_track::setup_audio_tracks,))
         .add_systems(Update, (
             ui::audio_track::track_icon_interaction_system,
-            ui::play_stop_reset_btns::initial_button_system,
+            ui::play_stop_reset_btns::first_play_button_system,
             ui::play_stop_reset_btns::play_pause_button_system,
             ui::audio_track::spawn_audio_squares_system,
             ui::audio_track::move_and_collide_squares_system,
             ui::audio_track::icon_breathing_system,
             ui::audio_controller::play_stop_system,
+            ui::audio_controller::check_and_spawn_stems_system,
             ui::audio_controller::check_vocals_mute_system,
             ui::audio_controller::check_bass_mute_system,
             ui::audio_controller::check_drums_mute_system,
