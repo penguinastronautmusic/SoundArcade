@@ -1,5 +1,6 @@
 //! The backend module contains the core and shared data used by the main systems of the application.
 //! 
+//! Note that this should not be referenced directly by the UI components. Use the midware to do so.
 
 use std::path::PathBuf;
 use std::time::Duration;

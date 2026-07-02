@@ -1,3 +1,6 @@
+//! Module for calculating the decibel (dB) levels of an audio file.
+//! This should be used for each stems.
+
 use std::path::PathBuf;
 use std::time::Duration;
 use bevy::log::{debug, info, warn};

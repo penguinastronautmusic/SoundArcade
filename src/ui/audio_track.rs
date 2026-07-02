@@ -1,3 +1,9 @@
+//! UI system to display all the audio tracks, and spawn the audio squares, in a very 
+//! "Rock-Band" style. (https://en.wikipedia.org/wiki/Rock_Band_(video_game))
+//! 
+//! The base unit is a "Tick", which is when a specific line for each track is spawned.
+//! The tick length is decided on the startup of the application.
+
 use bevy::prelude::*;
 use crate::midware::{TrackType, StemResources};
 use crate::ui::audio_controller::{BassState, DrumsState, OthersState, PlaybackState, VocalsState};

@@ -80,7 +80,8 @@ fn main() {
         .run();
 }
 
-
+/// Initial setup of the application.
+/// This loads the image handles and the camera.
 fn setup(mut commands: Commands,
          asset_server: Res<AssetServer>) {
     commands.spawn((

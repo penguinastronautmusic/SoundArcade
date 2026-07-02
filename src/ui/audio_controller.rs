@@ -1,4 +1,4 @@
-//! UI system to use the music, reponding to the states of the song and each stems.
+//! UI system to use the music, responding to the states of the song and each stem.
 //! Other UI components will modify the state of the audio, and this will respond to it
 //! by starting the song, muting stems, etc.
 

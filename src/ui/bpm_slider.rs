@@ -1,3 +1,6 @@
+//! A very simple slider UI system, with a value label.
+//! Note that AI was used to build this.
+
 use bevy::{
     input_focus::{
         tab_navigation::{TabIndex},

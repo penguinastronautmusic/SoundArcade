@@ -1,5 +1,5 @@
 //! UI system to spawn and handle play, stop and reset buttons.
-//! This is meant to be used in the core system, when the song is playing.
+//! This is meant to be used in the core system when the song is playing.
 use bevy::asset::{Handle};
 use bevy::camera::{Camera, Camera2d};
 use bevy::color::Color;

@@ -2,9 +2,10 @@
 //!
 //! This uses the [`backend::load_backend`] function to take in an audio file, divide into stems,
 //! and process its DB levels.
+//! 
+//! The Midware system will then keep the data in memory for the other components to use.
 //!
 //! Note that the task is spun up in the background to allow for the UI to continue normally.
-//!
 
 use std::path::PathBuf;
 use bevy::prelude::*;
