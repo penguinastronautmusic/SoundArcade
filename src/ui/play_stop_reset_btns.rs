@@ -1,13 +1,13 @@
 //! UI system to spawn and handle play, stop and reset buttons.
 //! This is meant to be used in the core system, when the song is playing.
-use bevy::asset::Handle;
+use bevy::asset::{Handle};
 use bevy::camera::{Camera, Camera2d};
 use bevy::color::Color;
 use bevy::image::Image;
 use bevy::input::ButtonInput;
 use bevy::log::info;
 use bevy::math::Vec3;
-use bevy::prelude::{default, Commands, Component, Entity, GlobalTransform, MouseButton, Query, Res, ResMut, Resource, Sprite, Transform, Window, With};
+use bevy::prelude::{*};
 use crate::ui::audio_controller::{BassState, DrumsState, OthersState, PlaybackState, VocalsState};
 
 #[derive(Component)]
@@ -37,7 +37,7 @@ pub fn setup_play_stop_reset_buttons(
     ));
 }
 
-pub fn initial_button_system(
+pub fn first_play_button_system(
     mut commands: Commands,
     window_query: Query<&Window>,
     camera_query: Query<(&Camera, &GlobalTransform), With<Camera2d>>,

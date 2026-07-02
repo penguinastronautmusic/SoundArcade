@@ -2,10 +2,11 @@
 //! Other UI components will modify the state of the audio, and this will respond to it
 //! by starting the song, muting stems, etc.
 
-use bevy::audio::{AudioSink, AudioSinkPlayback};
+use bevy::asset::AssetServer;
+use bevy::audio::{AudioPlayer, AudioSink, AudioSinkPlayback};
 use bevy::log::{info, warn};
-use bevy::prelude::{Commands, Query, ResMut, Resource, With};
-use crate::ui::process_audio::{BassStemAudio, DrumsStemAudio, OtherStemAudio, VocalsStemAudio};
+use bevy::prelude::{Commands, Query, Res, ResMut, Resource, With};
+use crate::ui::process_audio::{AudioLoadingQueue, BassStemAudio, DrumsStemAudio, OtherStemAudio, VocalsStemAudio};
 
 
 #[derive(Resource, Default)]
@@ -14,12 +15,8 @@ pub struct PlaybackState {
     pub has_changed: bool,
 }
 
-
 pub fn setup_audio_controller(mut commands: Commands) {
-    // Starting Playback state to "Changed==True" because
-    // Bevy plays the audio upon loading the file.
-    // See ProcessAudio for loading of the audio files.
-    commands.insert_resource(PlaybackState { is_playing: false, has_changed: true });
+    commands.insert_resource(PlaybackState { is_playing: false, has_changed: false });
     commands.insert_resource(VocalsState { is_active: false, has_changed: false });
     commands.insert_resource(DrumsState { is_active: false, has_changed: false });
     commands.insert_resource(BassState { is_active: false, has_changed: false });
@@ -28,10 +25,15 @@ pub fn setup_audio_controller(mut commands: Commands) {
 
 pub fn play_stop_system(
     mut playback_state: ResMut<PlaybackState>,
+    loading_queue: ResMut<AudioLoadingQueue>,
     vocals_music_controller: Query<&AudioSink, With<VocalsStemAudio>>,
     bass_music_controller: Query<&AudioSink, With<BassStemAudio>>,
     drums_music_controller: Query<&AudioSink, With<DrumsStemAudio>>,
     other_music_controller: Query<&AudioSink, With<OtherStemAudio>>) {
+    if loading_queue.should_spawn {
+        // Ignores play/stop system if the audio is not loaded yet.
+        return;
+    }
     if playback_state.has_changed {
         info!("Play/Stop button action changed. Playing: {}", playback_state.is_playing);
         if let Ok(sink) = vocals_music_controller.single() {
@@ -148,5 +150,34 @@ pub fn check_other_mute_system(
             sink.toggle_mute();
             other.has_changed = false;
         }
+    }
+}
+
+pub fn check_and_spawn_stems_system(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut loading_queue: ResMut<AudioLoadingQueue>,
+    mut playback_state: ResMut<PlaybackState>,
+) {
+    if !loading_queue.should_spawn { return; }
+
+    // Check if Bevy's background asset threads have finished loading every file
+    let all_loaded = loading_queue.handles.iter().all(|handle| {
+        asset_server.is_loaded_with_dependencies(handle)
+    });
+
+    if all_loaded && playback_state.is_playing {
+        info!("All stems loaded successfully. Spawning audio players in sync!");
+
+        // Stems are safe to pop out of the vector since we are consuming them
+        let mut handles = std::mem::take(&mut loading_queue.handles);
+
+        commands.spawn((AudioPlayer::new(handles.remove(0)), VocalsStemAudio));
+        commands.spawn((AudioPlayer::new(handles.remove(0)), BassStemAudio));
+        commands.spawn((AudioPlayer::new(handles.remove(0)), DrumsStemAudio));
+        commands.spawn((AudioPlayer::new(handles.remove(0)), OtherStemAudio));
+
+        loading_queue.should_spawn = false;
+        playback_state.has_changed = false;  // Reset playback. Upon load, files are playing already.
     }
 }
