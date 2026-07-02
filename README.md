@@ -11,6 +11,7 @@ Use the app however you want, as long as you don't use this code in another comm
 You can see it in action [here](https://www.youtube.com/@PenguinAstronautMusic)
 
 Note that this app is in early development. Any help is appreciated!
+
 ![Screenshot_Full.png](screenshots/Screenshot_Full.png)
 
 ### Support the devs!
